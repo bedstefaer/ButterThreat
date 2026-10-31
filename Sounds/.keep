@@ -1,0 +1,5 @@
+# This file ensures the Sounds directory is tracked in git
+# Add your audio files here:
+# - heartbeat.ogg
+# - warning.ogg
+# - aggro.ogg
