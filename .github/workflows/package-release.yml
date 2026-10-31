@@ -80,8 +80,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: release/RPGThreat-${{ steps.meta.outputs.VERSION }}-${{ steps.meta.outputs.CLIENT }}.zip
-          generate_release_notes: true
+          generate_release_notes: false
           name: RPGThreat ${{ steps.meta.outputs.VERSION }} (WoW ${{ steps.meta.outputs.CLIENT }})
+          body: |
+            Built for **World of Warcraft ${{ steps.meta.outputs.CLIENT }}** (Interface ${{ steps.meta.outputs.INTERFACE }})
+            
+            **Installation:**
+            1. Download the zip file
+            2. Extract to: `World of Warcraft/_retail_/Interface/AddOns/`
+            3. Launch WoW
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
