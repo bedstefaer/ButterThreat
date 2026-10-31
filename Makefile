@@ -1,4 +1,4 @@
-.PHONY: all check lint test package
+.PHONY: all check lint test
 
 all: check
 
@@ -9,6 +9,3 @@ lint:
 
 test:
 	lua tests/run.lua
-
-package:
-	./package.sh
