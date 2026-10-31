@@ -16,43 +16,58 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Get version from tag
+      - name: Get version
         id: version
         run: |
-          if [ -n "${{ github.ref_name }}" ]; then
-            echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
           else
-            echo "VERSION=dev-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+            VERSION="dev-$(date +%Y%m%d-%H%M%S)"
           fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
       
-      - name: Create TOC with version
+      - name: Install zip
+        run: sudo apt-get update && sudo apt-get install -y zip
+      
+      - name: Update TOC version
         run: |
-          # Update the version in the TOC file
-          sed -i "s/## Version: .*/## Version: ${{ steps.version.outputs.VERSION }}/" RPGThreat.toc
+          echo "Current TOC:"
+          cat RPGThreat.toc
+          sed -i "s/^## Version: .*/## Version: ${{ steps.version.outputs.VERSION }}/" RPGThreat.toc
+          echo "Updated TOC:"
+          cat RPGThreat.toc
       
       - name: Create release package
         run: |
-          mkdir -p release
-          # Create a clean package without .git and .github directories
-          cp -r RPGThreat.toc RPGThreat.lua README.md QUICKSTART.md Sounds release/
+          mkdir -p release/RPGThreat
+          cp RPGThreat.toc release/RPGThreat/
+          cp RPGThreat.lua release/RPGThreat/
+          cp README.md release/RPGThreat/
+          cp QUICKSTART.md release/RPGThreat/
+          cp package.sh release/RPGThreat/
+          cp package.bat release/RPGThreat/
+          mkdir -p release/RPGThreat/Sounds
+          cp Sounds/*.ogg release/RPGThreat/Sounds/ 2>/dev/null || true
           
-          # Create zip package
           cd release
-          zip -r ../RPGThreat-${{ steps.version.outputs.VERSION }}.zip .
+          zip -r RPGThreat-${{ steps.version.outputs.VERSION }}.zip RPGThreat
           cd ..
+          echo "Package created:"
+          ls -lh release/
       
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: RPGThreat-${{ steps.version.outputs.VERSION }}
-          path: RPGThreat-${{ steps.version.outputs.VERSION }}.zip
+          path: release/RPGThreat-${{ steps.version.outputs.VERSION }}.zip
           retention-days: 30
       
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: RPGThreat-${{ steps.version.outputs.VERSION }}.zip
+          files: release/RPGThreat-${{ steps.version.outputs.VERSION }}.zip
           generate_release_notes: true
           fail_on_unmatched_files: false
         env:
