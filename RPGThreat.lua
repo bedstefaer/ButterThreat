@@ -88,7 +88,8 @@ end
 
 -- Get class-specific emote or fallback to default
 local function GetEmoteForState(state)
-    local playerClass = UnitClass("player")
+    -- Second return value is the locale-independent token (e.g. "WARRIOR")
+    local _, playerClass = UnitClass("player")
     local classEmotes = CONFIG.CLASS_EMOTES[playerClass]
     
     if classEmotes and classEmotes[state] then
