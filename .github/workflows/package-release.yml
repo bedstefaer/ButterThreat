@@ -9,66 +9,79 @@ on:
 jobs:
   package:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
-      - name: Get version
-        id: version
+
+      - name: Get version and interface
+        id: meta
         run: |
+          # Extract version from tag or use dev timestamp
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             VERSION="${GITHUB_REF#refs/tags/}"
           else
             VERSION="dev-$(date +%Y%m%d-%H%M%S)"
           fi
+
+          # Extract WoW Interface version from TOC
+          INTERFACE=$(grep '^## Interface:' RPGThreat.toc | awk '{print $3}')
+          # Map to client name
+          if [[ "$INTERFACE" == 10* ]]; then
+            CLIENT="Retail"
+          elif [[ "$INTERFACE" == 2* ]]; then
+            CLIENT="Classic"
+          else
+            CLIENT="Unknown"
+          fi
+
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
-      
+          echo "INTERFACE=$INTERFACE" >> $GITHUB_OUTPUT
+          echo "CLIENT=$CLIENT" >> $GITHUB_OUTPUT
+          echo "Building: $VERSION for WoW $CLIENT (Interface $INTERFACE)"
+
       - name: Install zip
         run: sudo apt-get update && sudo apt-get install -y zip
-      
-      - name: Update TOC version
-        run: |
-          echo "Current TOC:"
-          cat RPGThreat.toc
-          sed -i "s/^## Version: .*/## Version: ${{ steps.version.outputs.VERSION }}/" RPGThreat.toc
-          echo "Updated TOC:"
-          cat RPGThreat.toc
-      
+
       - name: Create release package
         run: |
-          mkdir -p release/RPGThreat
+          # Create clean directory structure
+          mkdir -p release/RPGThreat/Sounds
+
+          # Copy ONLY what WoW needs
           cp RPGThreat.toc release/RPGThreat/
           cp RPGThreat.lua release/RPGThreat/
-          cp README.md release/RPGThreat/
-          cp QUICKSTART.md release/RPGThreat/
-          cp package.sh release/RPGThreat/
-          cp package.bat release/RPGThreat/
-          mkdir -p release/RPGThreat/Sounds
-          cp Sounds/*.ogg release/RPGThreat/Sounds/ 2>/dev/null || true
-          
+          cp -r Sounds/*.ogg release/RPGThreat/Sounds/ 2>/dev/null || true
+
+          # Update TOC version in the release copy
+          sed -i "s/^## Version: .*/## Version: ${{ steps.meta.outputs.VERSION }}/" release/RPGThreat/RPGThreat.toc
+
+          # Create zip
           cd release
-          zip -r RPGThreat-${{ steps.version.outputs.VERSION }}.zip RPGThreat
+          zip -r RPGThreat-${{ steps.meta.outputs.VERSION }}-${{ steps.meta.outputs.CLIENT }}.zip RPGThreat
           cd ..
+
           echo "Package created:"
           ls -lh release/
-      
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: RPGThreat-${{ steps.version.outputs.VERSION }}
-          path: release/RPGThreat-${{ steps.version.outputs.VERSION }}.zip
+          name: RPGThreat-${{ steps.meta.outputs.VERSION }}-${{ steps.meta.outputs.CLIENT }}
+          path: release/RPGThreat-${{ steps.meta.outputs.VERSION }}-${{ steps.meta.outputs.CLIENT }}.zip
           retention-days: 30
-      
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: release/RPGThreat-${{ steps.version.outputs.VERSION }}.zip
+          files: release/RPGThreat-${{ steps.meta.outputs.VERSION }}-${{ steps.meta.outputs.CLIENT }}.zip
           generate_release_notes: true
+          name: RPGThreat ${{ steps.meta.outputs.VERSION }} (WoW ${{ steps.meta.outputs.CLIENT }})
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
