@@ -31,7 +31,8 @@ jobs:
           # Extract WoW Interface version from TOC
           INTERFACE=$(grep '^## Interface:' RPGThreat.toc | awk '{print $3}')
           # Map to client name
-          if [[ "$INTERFACE" == 10* ]]; then
+          # Retail Interface numbers are 6 digits (e.g. 120105); Classic ones are 5 digits
+          if [[ "$INTERFACE" =~ ^1[0-9]{5}$ ]]; then
             CLIENT="Retail"
           elif [[ "$INTERFACE" == 2* ]]; then
             CLIENT="Classic"
