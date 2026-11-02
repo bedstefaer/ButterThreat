@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime": {
+    "version": "Lua 5.1"
+  },
+  "workspace": {
+    "library": [".wow-api/Annotations"],
+    "ignoreDir": [".wow-api", "tests"],
+    "checkThirdParty": false
+  },
+  "diagnostics": {
+    "globals": ["SlashCmdList", "SLASH_RPGTHREAT1", "SLASH_RPGTHREAT2"],
+    "disable": ["need-check-nil", "deprecated"]
+  }
+}

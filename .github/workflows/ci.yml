@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  LUALS_VERSION: "3.19.2"
+  WOW_API_REF: "0.22.3"
+
+jobs:
+  lua-checks:
+    name: Lint and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Lua and luacheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1 luarocks make
+          sudo luarocks install luacheck
+
+      - name: Luacheck and unit tests
+        run: make check
+
+  wow-api-check:
+    name: WoW API check (LuaLS)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout WoW API annotations
+        uses: actions/checkout@v4
+        with:
+          repository: Ketho/vscode-wow-api
+          ref: ${{ env.WOW_API_REF }}
+          path: .wow-api-src
+
+      - name: Stage annotations
+        run: |
+          mkdir .wow-api
+          mv .wow-api-src/Annotations .wow-api/Annotations
+          rm -rf .wow-api-src
+
+      - name: Install LuaLS
+        run: |
+          mkdir -p "$RUNNER_TEMP/luals"
+          curl -sSL "https://github.com/LuaLS/lua-language-server/releases/download/${LUALS_VERSION}/lua-language-server-${LUALS_VERSION}-linux-x64.tar.gz" \
+            | tar xz -C "$RUNNER_TEMP/luals"
+
+      - name: Run LuaLS check
+        run: |
+          "$RUNNER_TEMP/luals/bin/lua-language-server" \
+            --check . --checklevel Information \
+            --logpath "$RUNNER_TEMP/luals-log" \
+            --check_out_path "$RUNNER_TEMP/luals-check.json"
+          # LuaLS exits 0 even when it finds problems, so gate on the report
+          if ! jq -e 'length == 0' "$RUNNER_TEMP/luals-check.json" >/dev/null; then
+            jq -r 'to_entries[] | .key as $f | .value[] | "\($f | sub("^file://\(env.GITHUB_WORKSPACE)/"; "")):\(.range.start.line + 1): [\(.code)] \(.message)"' "$RUNNER_TEMP/luals-check.json"
+            exit 1
+          fi
