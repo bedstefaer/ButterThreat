@@ -5,7 +5,7 @@ World of Warcraft addon (RPGThreat / ButterThreat) written in Lua 5.1. It turns 
 ## Layout
 - `RPGThreat.lua` – entire addon (config, throttling, event handling, slash commands `/rpgthreat`, `/rt`).
 - `RPGThreat.toc` – addon manifest (interface version, file list). Any new `.lua` file must be listed here and copied in the "Create release package" step of `.github/workflows/package-release.yml` (it ships only the `.toc`, `.lua` and `Sounds/*.ogg` files).
-- `Sounds/` – `.ogg` assets referenced by `CONFIG.SOUNDS` (`heartbeat`, `warning`, `aggro`).
+- `Sounds/` – `.ogg` assets referenced by `CONFIG.SOUNDS` (`heartbeat`, `warning`, `aggro`). Must be Ogg **Vorbis** (not Opus); the WoW client silently plays nothing for Opus-in-Ogg. Verify with `ffprobe` (`codec_name=vorbis`).
 - `tests/` – dependency-free unit tests; `tests/wow_mock.lua` mocks the WoW API and loads `RPGThreat.lua`.
 - `.github/workflows/ci.yml` – `lua-checks` (luacheck + tests) and `wow-api-check` (LuaLS against WoW API annotations); `package-release.yml` – release zip on `v*` tags.
 
