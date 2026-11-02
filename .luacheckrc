@@ -18,6 +18,6 @@ files["tests/"] = {
     globals = {
         "CreateFrame", "UIParent", "GetTime", "UnitExists", "UnitName", "UnitClass",
         "UnitClassification", "UnitThreatSituation", "PlaySoundFile", "SendChatMessage",
-        "C_Timer", "SlashCmdList",
+        "C_Timer", "SlashCmdList", "print",
     },
 }

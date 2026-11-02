@@ -241,11 +241,23 @@ RPGThreat:SetScript("OnEvent", function(self, event, ...)
     end
 end)
 
+-- Play a sound by its CONFIG.SOUNDS key (case-insensitive), bypassing throttling
+local function PlaySoundByName(name)
+    local soundPath = CONFIG.SOUNDS[string.upper(name)]
+    if not soundPath then return false end
+    PlaySoundFile(soundPath, "Master")
+    return true
+end
+
 -- Slash command for manual testing
 SLASH_RPGTHREAT1 = "/rpgthreat"
 SLASH_RPGTHREAT2 = "/rt"
 
-SlashCmdList["RPGTHREAT"] = function(cmd)
+SlashCmdList["RPGTHREAT"] = function(msg)
+    local cmd, arg = string.match(msg or "", "^%s*(%S*)%s*(%S*)")
+    cmd = string.lower(cmd or "")
+    arg = string.lower(arg or "")
+
     if cmd == "test" then
         -- Test all states
         for state = 0, 3 do
@@ -257,6 +269,21 @@ SlashCmdList["RPGTHREAT"] = function(cmd)
             end)
         end
         print("RPGThreat: Test cycle initiated")
+    elseif cmd == "sound" then
+        if arg == "all" then
+            -- Space the sounds out so each one is audible
+            local names = { "heartbeat", "warning", "aggro" }
+            for i, name in ipairs(names) do
+                C_Timer.After((i - 1) * 2, function()
+                    PlaySoundByName(name)
+                end)
+            end
+            print("RPGThreat: Playing all sounds")
+        elseif arg ~= "" and PlaySoundByName(arg) then
+            print("RPGThreat: Playing " .. arg)
+        else
+            print("RPGThreat: Usage: /rpgthreat sound <heartbeat|warning|aggro|all>")
+        end
     elseif cmd == "reset" then
         -- Reset state
         lastState = nil
@@ -268,6 +295,7 @@ SlashCmdList["RPGTHREAT"] = function(cmd)
         print("RPGThreat v1.0.0")
         print("Commands:")
         print("  /rpgthreat test - Cycle through all threat states")
+        print("  /rpgthreat sound <heartbeat|warning|aggro|all> - Play a sound effect")
         print("  /rpgthreat reset - Reset threat state")
     end
 end
