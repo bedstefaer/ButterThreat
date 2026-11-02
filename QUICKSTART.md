@@ -36,6 +36,7 @@ Type `/rpgthreat test` to cycle through all threat states.
 
 - `/rpgthreat` or `/rt` - Show help
 - `/rpgthreat test` - Test all threat states
+- `/rpgthreat sound <heartbeat|warning|aggro|all>` - Play a sound effect
 - `/rpgthreat reset` - Reset state
 
 ## 7. Customize (Optional)

@@ -53,6 +53,7 @@ By default, processes all targets. To enable boss/elite-only filtering, uncommen
 
 - `/rpgthreat` or `/rt` - Show addon version and commands
 - `/rpgthreat test` - Cycle through all threat states for testing
+- `/rpgthreat sound <heartbeat|warning|aggro|all>` - Play a single sound effect (or all of them in sequence)
 - `/rpgthreat reset` - Reset threat state
 
 ## File Structure

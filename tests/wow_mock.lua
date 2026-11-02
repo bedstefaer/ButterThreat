@@ -30,7 +30,7 @@ function M.load_addon(opts)
     end
     UIParent = {}
     SlashCmdList = {}
-    C_Timer = { After = function() end }
+    C_Timer = { After = function(_, fn) fn() end }
 
     GetTime = function() return env.now end
     UnitExists = function() return env.has_target end
@@ -51,6 +51,13 @@ function M.load_addon(opts)
     local addon = env.frames[1]
     function env.fire(event)
         addon.scripts.OnEvent(addon, event)
+    end
+    -- Run a slash command with chat output silenced
+    function env.slash(msg)
+        local real_print = print
+        print = function() end
+        SlashCmdList.RPGTHREAT(msg)
+        print = real_print
     end
     function env.vignette_shown()
         -- The vignette frame is created on PLAYER_LOGIN (second frame)

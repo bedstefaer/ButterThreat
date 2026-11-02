@@ -124,6 +124,31 @@ test("target change resets state so current threat re-announces", function()
     eq(#env.emotes, 2, "emotes")
 end)
 
+test("sound command plays the named sound, case-insensitively, ignoring throttle", function()
+    local env = setup()
+    env.slash("sound warning")
+    env.slash("SOUND Aggro")
+    eq(#env.sounds, 2, "sounds")
+    eq(env.sounds[1], SOUND .. "warning.ogg", "first")
+    eq(env.sounds[2], SOUND .. "aggro.ogg", "second")
+end)
+
+test("sound all plays every sound in order", function()
+    local env = setup()
+    env.slash("sound all")
+    eq(#env.sounds, 3, "sounds")
+    eq(env.sounds[1], SOUND .. "heartbeat.ogg", "first")
+    eq(env.sounds[2], SOUND .. "warning.ogg", "second")
+    eq(env.sounds[3], SOUND .. "aggro.ogg", "third")
+end)
+
+test("sound command with unknown or missing name plays nothing", function()
+    local env = setup()
+    env.slash("sound bogus")
+    env.slash("sound")
+    eq(#env.sounds, 0, "sounds")
+end)
+
 for _, t in ipairs(tests) do
     local ok, err = pcall(t.fn)
     if ok then
